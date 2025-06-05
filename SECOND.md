@@ -19,7 +19,7 @@ Step     | Step Details	            | 	Expected Results		          |    Actual R
 
 **Постусловие:** Перезагрузка страницы
 
-**Баг-репорт:**
+**Баг-репорт:** https://github.com/Angelina1821/netology_testirovanie/issues/5
 
 ---
 
@@ -60,7 +60,7 @@ Step     | Step Details	            | 	Expected Results		          |    Actual R
 
 **Постусловие:** Перезагрузка страницы
 
-**Баг-репорт:**
+**Баг-репорт:** https://github.com/Angelina1821/netology_testirovanie/issues/6
 
 ---
 
@@ -82,7 +82,7 @@ Step     | Step Details	            | 	Expected Results		          |    Actual R
 
 **Постусловие:** Перезагрузка страницы
 
-**Баг-репорт:**
+**Баг-репорт:** https://github.com/Angelina1821/netology_testirovanie/issues/7
 
 ---
 
@@ -103,5 +103,5 @@ Step     | Step Details	            | 	Expected Results		          |    Actual R
 
 **Постусловие:** Перезагрузка страницы
 
-**Баг-репорт:** 
+**Баг-репорт:** https://github.com/Angelina1821/netology_testirovanie/issues/8
 
