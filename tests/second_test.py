@@ -172,3 +172,36 @@ def test_transfer_commission_and_validation(driver, sum, expected_commission, ex
         except NoAlertPresentException:
             if expect_success:
                 pytest.fail(f"Не появилось подтверждение перевода {sum} руб")
+
+# Тест 004
+
+@pytest.mark.parametrize("url_params,expected_balance,expected_reserved,comment", [
+    pytest.param(
+        "", 
+        "0", "0",
+        "Без параметров - должен показывать нулевые значения"
+    ),
+    pytest.param(
+        "?balance=30000", 
+        "30'000", "0",
+        "Только balance=30000 - должен показывать баланс 30000, резерв 0"
+    ),
+    pytest.param(
+        "?reserved=20001", 
+        "0", "0",
+        "Только reserved=20001 - должен игнорировать резерв без баланса",
+        marks=pytest.mark.xfail(reason="Известный баг: резерв отображается без указания баланса, резерв не может быть больше баланса")
+    )
+])
+def test_url_parameters_handling(driver, url_params, expected_balance, expected_reserved, comment):
+    driver.get(f"{BASE_URL}{url_params}")
+    
+    card_text = get_balance_and_reserved_text(driver)
+
+    assert f"На счету: {expected_balance}" in card_text, (
+        f"Неверное отображение баланса. Ожидалось: 'На счету: {expected_balance}', "
+        f"Фактически: '{card_text}'")
+    
+    assert f"Резерв: {expected_reserved}" in card_text, (
+        f"Неверное отображение резерва. Ожидалось: 'Резерв: {expected_reserved}', "
+        f"Фактически: '{card_text}'")
