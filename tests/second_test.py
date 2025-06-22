@@ -37,7 +37,6 @@ def driver():
     yield driver
     driver.quit()
 
-#Тест 001
 
 def get_balance_and_reserved_text(driver):
     cards = driver.find_elements(By.CSS_SELECTOR, ".g-box.g-card")
@@ -112,8 +111,6 @@ def test_transfer_button_and_operation(driver, card_number, transfer_should_succ
         if transfer_should_succeed:
             pytest.fail(f"Ошибка: {comment} - не появилось уведомление об успешной операции")
 
-#Тест 003
-
 @pytest.mark.parametrize("sum,expected_commission,expect_success,expect_button,comment", [
     pytest.param(
         "1000", "100", True, True,
@@ -173,7 +170,6 @@ def test_transfer_commission_and_validation(driver, sum, expected_commission, ex
             if expect_success:
                 pytest.fail(f"Не появилось подтверждение перевода {sum} руб")
 
-# Тест 004
 
 @pytest.mark.parametrize("url_params,expected_balance,expected_reserved,comment", [
     pytest.param(
@@ -205,3 +201,77 @@ def test_url_parameters_handling(driver, url_params, expected_balance, expected_
     assert f"Резерв: {expected_reserved}" in card_text, (
         f"Неверное отображение резерва. Ожидалось: 'Резерв: {expected_reserved}', "
         f"Фактически: '{card_text}'")
+    
+@pytest.mark.xfail(reason="Известный баг: комиссия рассчитывается для валютных счетов как для рублевых")
+def test_dollar_account_transfer_with_commission_bug(driver):
+    driver.get(f"{BASE_URL}?balance=100&currency=usd")
+    
+    cards = driver.find_elements(By.CLASS_NAME, "g-card_clickable")
+    for card in cards:
+        if card.find_element(By.TAG_NAME, "h2").text == "Доллары":
+            card.click()
+            break
+    
+    input_numbercard_sum(driver, "1234567890123456", "10")
+    
+    commission = driver.find_element(By.ID, "comission").text
+    assert commission == "1", f"Ожидалась комиссия 1$ (10%), получено {commission}$"
+
+@pytest.mark.xfail(reason="Известный баг: система позволяет переводить суммы больше баланса")
+def test_dollar_account_insufficient_funds_bug(driver):
+    driver.get(f"{BASE_URL}?balance=100&currency=usd")
+    
+    cards = driver.find_elements(By.CLASS_NAME, "g-card_clickable")
+    for card in cards:
+        if card.find_element(By.TAG_NAME, "h2").text == "Доллары":
+            card.click()
+            break
+    
+    input_numbercard_sum(driver, "1234567890123456", "5000")
+    
+    try:
+        alert = Alert(driver)
+        assert "недостаточно средств" in alert.text.lower()
+        alert.accept()
+    except NoAlertPresentException:
+        pytest.fail("Не появилось сообщение о недостатке средств")
+
+@pytest.mark.xfail(reason="Известный баг: резерв отображается без указания баланса для валютных счетов")
+def test_currency_reserved_without_balance_bug(driver):
+    """Проверка отображения резерва без баланса для валютных счетов"""
+    driver.get(f"{BASE_URL}?reserved=50&currency=usd")
+    
+    cards = driver.find_elements(By.CLASS_NAME, "g-card_clickable")
+    for card in cards:
+        if card.find_element(By.TAG_NAME, "h2").text == "Доллары":
+            card.click()
+            break
+    
+    card_text = ""
+    cards = driver.find_elements(By.CSS_SELECTOR, ".g-box.g-card")
+    for card in cards:
+        if "Доллары" in card.text:
+            card_text = card.text
+            break
+    
+    assert "Резерв: 0 $" in card_text, "Баг: резерв отображается без указания баланса"
+
+def test_currency_balance_display(driver):
+    """Проверка корректного отображения баланса для валютных счетов"""
+    driver.get(f"{BASE_URL}?balance=300&reserved=26&currency=eur")
+    
+    cards = driver.find_elements(By.CLASS_NAME, "g-card_clickable")
+    for card in cards:
+        if card.find_element(By.TAG_NAME, "h2").text == "Евро":
+            card.click()
+            break
+    
+    card_text = ""
+    cards = driver.find_elements(By.CSS_SELECTOR, ".g-box.g-card")
+    for card in cards:
+        if "Евро" in card.text:
+            card_text = card.text
+            break
+    
+    assert "На счету: 300 €" in card_text
+    assert "Резерв: 26 €" in card_text
